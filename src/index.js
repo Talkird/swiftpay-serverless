@@ -3,6 +3,7 @@ const {
   InvokeModelCommand,
 } = require("@aws-sdk/client-bedrock-runtime");
 
+//test
 const express = require("express");
 const serverless = require("serverless-http");
 const app = express();
@@ -43,6 +44,5 @@ app.post("/analyze", async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 });
-
 
 exports.handler = serverless(app);
