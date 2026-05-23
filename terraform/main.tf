@@ -44,7 +44,7 @@ resource "aws_iam_role_policy" "bedrock_policy" {
 
 # --- Lambda Function ---
 resource "aws_lambda_function" "swiftpay_lambda" {
-  filename      = "function.zip"
+  filename      = "../function.zip"
   function_name = var.lambda_function_name
   role          = aws_iam_role.lambda_role.arn
   handler       = "src/index.handler"
@@ -52,7 +52,7 @@ resource "aws_lambda_function" "swiftpay_lambda" {
   timeout       = 60
   memory_size   = 512
 
-  source_code_hash = filebase64sha256("function.zip")
+  source_code_hash = filebase64sha256("../function.zip")
 }
 
 # --- API Gateway ---
