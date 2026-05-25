@@ -4,6 +4,10 @@ terraform {
       source  = "hashicorp/aws"
       version = ">= 5.0"
     }
+    null = {
+      source  = "hashicorp/null"
+      version = ">= 3.0"
+    }
   }
 }
 
@@ -51,22 +55,28 @@ data "aws_lambda_function" "swiftpay_lambda" {
   function_name = var.lambda_function_name
 }
 
-resource "aws_lambda_function_code" "swiftpay_lambda_code" {
-  s3_bucket            = data.aws_s3_bucket.lambda_deployment.id
-  s3_key               = aws_s3_object.lambda_zip.key
-  function_name        = data.aws_lambda_function.swiftpay_lambda.function_name
-  source_code_hash     = filebase64sha256("../function.zip")
-  depends_on           = [aws_s3_object.lambda_zip]
+resource "null_resource" "update_lambda_code" {
+  triggers = {
+    zip_hash = aws_s3_object.lambda_zip.etag
+  }
+
+  provisioner "local-exec" {
+    command = "aws lambda update-function-code --function-name ${data.aws_lambda_function.swiftpay_lambda.function_name} --s3-bucket ${data.aws_s3_bucket.lambda_deployment.id} --s3-key ${aws_s3_object.lambda_zip.key} --region ${var.region}"
+  }
+
+  depends_on = [aws_s3_object.lambda_zip]
 }
 
-resource "aws_lambda_function_environment" "swiftpay_lambda_env" {
-  function_name = data.aws_lambda_function.swiftpay_lambda.function_name
-
-  environment {
-    variables = {
-      MONGODB_URI = var.mongodb_uri
-    }
+resource "null_resource" "update_lambda_env" {
+  triggers = {
+    mongodb_uri = var.mongodb_uri
   }
+
+  provisioner "local-exec" {
+    command = "aws lambda update-function-configuration --function-name ${data.aws_lambda_function.swiftpay_lambda.function_name} --environment Variables={MONGODB_URI='${var.mongodb_uri}'} --region ${var.region}"
+  }
+
+  depends_on = [aws_s3_object.lambda_zip]
 }
 
 # --- API Gateway ---
