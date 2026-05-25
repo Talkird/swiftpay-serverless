@@ -1,3 +1,0 @@
-region                = "us-east-1"
-lambda_function_name  = "swiftpay-ai-analyzer"
-bucket_name           = "swiftpay-frontend-app"
