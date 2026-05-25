@@ -113,6 +113,11 @@ resource "aws_apigatewayv2_stage" "default" {
   name        = "$default"
   auto_deploy = true
 
+  depends_on = [
+    aws_apigatewayv2_route.api_route_post,
+    aws_apigatewayv2_route.api_route_get
+  ]
+
   access_log_settings {
     destination_arn = data.aws_cloudwatch_log_group.api_gateway_logs.arn
     format = jsonencode({
