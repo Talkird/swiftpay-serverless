@@ -1,6 +1,6 @@
-import mongoose from "mongoose";
-import connectDB from "./db.js";
-import Answer from "./mongoose/answers.js";
+const mongoose = require("mongoose");
+const connectDB = require("./mongoose/db.js");
+const Answer = require("./mongoose/answers.js");
 
 const {
   BedrockRuntimeClient,

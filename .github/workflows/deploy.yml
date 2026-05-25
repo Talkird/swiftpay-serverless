@@ -31,7 +31,14 @@ jobs:
 
       - name: Create Lambda deployment package
         run: |
-          zip -r function.zip src node_modules package.json
+          zip -r function.zip src node_modules package.json \
+            -x 'node_modules/.bin/*' \
+            'node_modules/*/test/*' \
+            'node_modules/*/.git/*' \
+            'node_modules/*/.github/*' \
+            'node_modules/*/.gitignore' \
+            'node_modules/*/README.md' \
+            'node_modules/*/LICENSE'
 
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
