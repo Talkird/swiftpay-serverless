@@ -96,18 +96,16 @@ resource "aws_apigatewayv2_route" "api_route_post" {
   api_id    = aws_apigatewayv2_api.api.id
   route_key = "POST /analyze"
   target    = "integrations/${aws_apigatewayv2_integration.lambda_integration.id}"
+
+  depends_on = [aws_apigatewayv2_integration.lambda_integration]
 }
 
 resource "aws_apigatewayv2_route" "api_route_get" {
   api_id    = aws_apigatewayv2_api.api.id
   route_key = "GET /responses"
   target    = "integrations/${aws_apigatewayv2_integration.lambda_integration.id}"
-}
 
-resource "aws_apigatewayv2_route" "api_route_default" {
-  api_id    = aws_apigatewayv2_api.api.id
-  route_key = "$default"
-  target    = "integrations/${aws_apigatewayv2_integration.lambda_integration.id}"
+  depends_on = [aws_apigatewayv2_integration.lambda_integration]
 }
 
 resource "aws_apigatewayv2_stage" "default" {
