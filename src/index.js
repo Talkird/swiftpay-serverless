@@ -12,28 +12,84 @@ app.use(express.json());
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
+// Function to call Infracost API
+async function getInfracostAnalysis(terraformPlanJSON) {
+  if (!process.env.INFRACOST_API_KEY) {
+    console.log(
+      "Infracost API key not configured, skipping Infracost analysis",
+    );
+    return null;
+  }
+
+  try {
+    console.log("Calling Infracost API...");
+    const infracostResponse = await fetch(
+      "https://api.infracost.io/v1/estimate?currency=USD",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-API-Key": process.env.INFRACOST_API_KEY,
+        },
+        body: JSON.stringify({
+          terraform: {
+            planJson: JSON.stringify(terraformPlanJSON),
+          },
+        }),
+      },
+    );
+
+    if (!infracostResponse.ok) {
+      throw new Error(
+        `Infracost API returned ${infracostResponse.status}: ${infracostResponse.statusText}`,
+      );
+    }
+
+    const infracostData = await infracostResponse.json();
+    console.log("Infracost analysis received");
+    return infracostData;
+  } catch (error) {
+    console.error("Error calling Infracost API:", error.message);
+    return null;
+  }
+}
+
 app.post("/analyze", async (req, res) => {
   const { terraformPlanJSON } = req.body;
+  let infracostData = null;
 
-  const prompt = `
+  try {
+    console.log("Starting analysis request...");
+
+    // First, get Infracost analysis
+    infracostData = await getInfracostAnalysis(terraformPlanJSON);
+
+    // Prepare the prompt with Infracost data if available
+    let prompt = `
     Analiza este reporte de costos de infraestructura de SwiftPay:
-    ${JSON.stringify(terraformPlanJSON)}
+    ${JSON.stringify(terraformPlanJSON)}`;
+
+    if (infracostData) {
+      prompt += `
+    
+Análisis detallado de costos de Infracost:
+${JSON.stringify(infracostData)}`;
+    }
+
+    prompt += `
     
     Genera un resumen breve en español:
     1. ¿Cuánto cambia el costo mensual?
     2. ¿Es una subida o bajada significativa?
     3. ¿Sugieres alguna optimización para ahorrar?`;
 
-  try {
-    console.log("Starting analysis request with Gemini...");
-    //flash
+    console.log("Starting Gemini analysis...");
     const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
     const result = await model.generateContent(prompt);
     const analysisText = result.response.text();
-    console.log("Gemini response received:", analysisText);
+    console.log("Gemini response received");
 
     await connectDB();
-
     const answer = new Answer({ body: analysisText });
     await answer.save();
 
@@ -45,16 +101,17 @@ app.post("/analyze", async (req, res) => {
 
     try {
       await connectDB();
-      const answer = new Answer({ body: JSON.stringify(terraformPlanJSON) });
+      const dataToSave = infracostData || terraformPlanJSON;
+      const answer = new Answer({ body: JSON.stringify(dataToSave) });
       await answer.save();
-      console.log("Terraform plan saved to MongoDB");
+      console.log("Infracost analysis saved to MongoDB");
     } catch (dbError) {
-      console.error("Failed to save Terraform plan to MongoDB:", dbError);
+      console.error("Failed to save to MongoDB:", dbError);
     }
 
     res.json({
-      analysis: terraformPlanJSON,
-      note: "Saved Terraform plan (Gemini temporarily unavailable)",
+      analysis: infracostData || terraformPlanJSON,
+      note: "Saved Infracost analysis (Gemini temporarily unavailable)",
     });
   }
 });

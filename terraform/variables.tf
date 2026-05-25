@@ -28,3 +28,10 @@ variable "gemini_api_key" {
   sensitive   = true
   default     = ""
 }
+
+variable "infracost_api_key" {
+  description = "Infracost API Key"
+  type        = string
+  sensitive   = true
+  default     = ""
+}

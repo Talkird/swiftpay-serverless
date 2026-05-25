@@ -59,16 +59,18 @@ jobs:
       - name: Terraform Plan
         run: |
           cd terraform
-          terraform plan -var="mongodb_uri=$MONGODB_URI" -var="gemini_api_key=$GEMINI_API_KEY" -out=tfplan
+          terraform plan -var="mongodb_uri=$MONGODB_URI" -var="gemini_api_key=$GEMINI_API_KEY" -var="infracost_api_key=$INFRACOST_API_KEY" -out=tfplan
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY || '' }}
+          INFRACOST_API_KEY: ${{ secrets.INFRACOST_API_KEY || '' }}
 
       - name: Terraform Apply
         run: |
           cd terraform
-          terraform apply -var="mongodb_uri=$MONGODB_URI" -var="gemini_api_key=$GEMINI_API_KEY" -auto-approve tfplan
+          terraform apply -var="mongodb_uri=$MONGODB_URI" -var="gemini_api_key=$GEMINI_API_KEY" -var="infracost_api_key=$INFRACOST_API_KEY" -auto-approve tfplan
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY || '' }}
+          INFRACOST_API_KEY: ${{ secrets.INFRACOST_API_KEY || '' }}
 
       - name: Output API Endpoint
         run: |
