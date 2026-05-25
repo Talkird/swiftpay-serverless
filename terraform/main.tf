@@ -64,7 +64,7 @@ resource "null_resource" "update_lambda_code" {
     command = "aws lambda update-function-code --function-name ${data.aws_lambda_function.swiftpay_lambda.function_name} --s3-bucket ${data.aws_s3_bucket.lambda_deployment.id} --s3-key ${aws_s3_object.lambda_zip.key} --region ${var.region}"
   }
 
-  depends_on = [aws_s3_object.lambda_zip]
+  depends_on = [aws_s3_object.lambda_zip, null_resource.update_lambda_env]
 }
 
 resource "null_resource" "update_lambda_env" {
