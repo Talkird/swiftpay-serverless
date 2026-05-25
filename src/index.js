@@ -1,7 +1,7 @@
 const mongoose = require("mongoose");
 const connectDB = require("./mongoose/db.js");
 const Answer = require("./mongoose/answers.js");
-// Load environment variables from .env file (if present)
+
 const { GoogleGenerativeAI } = require("@google/generative-ai");
 
 const express = require("express");
@@ -12,76 +12,19 @@ app.use(express.json());
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
-// Function to call Infracost API
-async function getInfracostAnalysis(terraformPlanJSON) {
-  if (!process.env.INFRACOST_API_KEY) {
-    console.log(
-      "Infracost API key not configured, skipping Infracost analysis",
-    );
-    return null;
-  }
-
-  try {
-    console.log("Calling Infracost API...");
-    const infracostResponse = await fetch(
-      "https://api.infracost.io/v1/estimate?currency=USD",
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "X-API-Key": process.env.INFRACOST_API_KEY,
-        },
-        body: JSON.stringify({
-          terraform: {
-            planJson: JSON.stringify(terraformPlanJSON),
-          },
-        }),
-      },
-    );
-
-    if (!infracostResponse.ok) {
-      throw new Error(
-        `Infracost API returned ${infracostResponse.status}: ${infracostResponse.statusText}`,
-      );
-    }
-
-    const infracostData = await infracostResponse.json();
-    console.log("Infracost analysis received");
-    return infracostData;
-  } catch (error) {
-    console.error("Error calling Infracost API:", error.message);
-    return null;
-  }
-}
-
 app.post("/analyze", async (req, res) => {
-  const { terraformPlanJSON } = req.body;
-  let infracostData = null;
+  const { infracostJSON } = req.body;
 
   try {
     console.log("Starting analysis request...");
 
-    // First, get Infracost analysis
-    infracostData = await getInfracostAnalysis(terraformPlanJSON);
-
-    // Prepare the prompt with Infracost data if available
-    let prompt = `
+    const prompt = `
     Analiza este reporte de costos de infraestructura de SwiftPay:
-    ${JSON.stringify(terraformPlanJSON)}`;
-
-    if (infracostData) {
-      prompt += `
-    
-Análisis detallado de costos de Infracost:
-${JSON.stringify(infracostData)}`;
-    }
-
-    prompt += `
+    ${JSON.stringify(infracostJSON)}
     
     Genera un resumen breve en español:
-    1. ¿Cuánto cambia el costo mensual?
-    2. ¿Es una subida o bajada significativa?
-    3. ¿Sugieres alguna optimización para ahorrar?`;
+    1. Cuál es el costo mensual?
+    2. ¿Sugieres alguna optimización para ahorrar?`;
 
     console.log("Starting Gemini analysis...");
     const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
@@ -101,8 +44,7 @@ ${JSON.stringify(infracostData)}`;
 
     try {
       await connectDB();
-      const dataToSave = infracostData || terraformPlanJSON;
-      const answer = new Answer({ body: JSON.stringify(dataToSave) });
+      const answer = new Answer({ body: JSON.stringify(infracostJSON) });
       await answer.save();
       console.log("Infracost analysis saved to MongoDB");
     } catch (dbError) {
@@ -110,7 +52,7 @@ ${JSON.stringify(infracostData)}`;
     }
 
     res.json({
-      analysis: infracostData || terraformPlanJSON,
+      analysis: infracostJSON,
       note: "Saved Infracost analysis (Gemini temporarily unavailable)",
     });
   }
