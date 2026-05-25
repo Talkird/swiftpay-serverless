@@ -10,25 +10,6 @@ const app = express();
 
 app.use(express.json());
 
-// CORS middleware - allow only SwiftPay frontend
-const allowedOrigin =
-  "http://swiftpay-frontend-app.s3-website-us-east-1.amazonaws.com";
-
-app.use((req, res, next) => {
-  const origin = req.headers.origin;
-
-  if (origin === allowedOrigin) {
-    res.header("Access-Control-Allow-Origin", origin);
-    res.header("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
-    res.header("Access-Control-Allow-Headers", "Content-Type");
-  }
-
-  if (req.method === "OPTIONS") {
-    return res.sendStatus(200);
-  }
-  next();
-});
-
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
 app.post("/analyze", async (req, res) => {
