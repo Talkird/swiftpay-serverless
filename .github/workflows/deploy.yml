@@ -8,6 +8,7 @@ on:
 
 env:
   AWS_REGION: us-east-1
+  MONGODB_URI: ${{ secrets.MONGODB_URI }}
 
 jobs:
   deploy:

@@ -1,9 +1,12 @@
+import mongoose from "mongoose";
+import connectDB from "./db.js";
+import Answer from "./mongoose/answers.js";
+
 const {
   BedrockRuntimeClient,
   InvokeModelCommand,
 } = require("@aws-sdk/client-bedrock-runtime");
 
-//testaaaaaa
 const express = require("express");
 const serverless = require("serverless-http");
 const app = express();
@@ -39,6 +42,12 @@ app.post("/analyze", async (req, res) => {
     const response = await client.send(command);
 
     const result = JSON.parse(new TextDecoder().decode(response.body));
+
+    await connectDB();
+
+    const answer = new Answer({ body: result.content[0].text });
+    await answer.save();
+
     res.json({ analysis: result.content[0].text });
   } catch (error) {
     res.status(500).json({ error: error.message });

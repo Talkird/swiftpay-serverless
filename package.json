@@ -15,6 +15,7 @@
   "dependencies": {
     "@aws-sdk/client-bedrock-runtime": "^3.1053.0",
     "express": "^5.2.1",
+    "mongoose": "^9.6.2",
     "serverless-http": "^4.0.0"
   }
 }
