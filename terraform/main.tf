@@ -48,7 +48,7 @@ resource "aws_iam_role_policy" "bedrock_policy" {
 
 # --- Lambda Function ---
 resource "aws_lambda_function" "swiftpay_lambda" {
-  s3_bucket     = aws_s3_bucket.lambda_deployment.id
+  s3_bucket     = data.aws_s3_bucket.lambda_deployment.id
   s3_key        = aws_s3_object.lambda_zip.key
   function_name = var.lambda_function_name
   role          = data.aws_iam_role.lambda_role.arn
