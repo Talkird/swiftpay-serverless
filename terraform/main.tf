@@ -12,16 +12,8 @@ provider "aws" {
 }
 
 # --- Lambda Role and Permissions ---
-resource "aws_iam_role" "lambda_role" {
+data "aws_iam_role" "lambda_role" {
   name = "swiftpay-lambda-role"
-  assume_role_policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [{
-      Action = "sts:AssumeRole"
-      Effect = "Allow"
-      Principal = { Service = "lambda.amazonaws.com" }
-    }]
-  })
 }
 
 resource "aws_iam_role_policy_attachment" "lambda_basic_execution" {
@@ -96,9 +88,8 @@ resource "aws_apigatewayv2_stage" "default" {
   }
 }
 
-resource "aws_cloudwatch_log_group" "api_gateway_logs" {
-  name              = "/aws/apigateway/swiftpay-api"
-  retention_in_days = 7
+data "aws_cloudwatch_log_group" "api_gateway_logs" {
+  name = "/aws/apigateway/swiftpay-api"
 }
 
 # --- Lambda Permission for API Gateway ---

@@ -49,12 +49,6 @@ jobs:
           cd terraform
           terraform init
 
-      - name: Import Existing AWS Resources
-        run: |
-          cd terraform
-          terraform import -auto-approve aws_iam_role.lambda_role swiftpay-lambda-role || true
-          terraform import -auto-approve aws_cloudwatch_log_group.api_gateway_logs /aws/apigateway/swiftpay-api || true
-
       - name: Terraform Plan
         run: |
           cd terraform
