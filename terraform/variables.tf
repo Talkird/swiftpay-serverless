@@ -15,3 +15,9 @@ variable "bucket_name" {
   type        = string
   default     = "swiftpay-frontend-app"
 }
+
+variable "mongodb_uri" {
+  description = "MongoDB connection URI"
+  type        = string
+  sensitive   = true
+}

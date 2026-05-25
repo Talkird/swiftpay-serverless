@@ -59,12 +59,12 @@ jobs:
       - name: Terraform Plan
         run: |
           cd terraform
-          terraform plan -out=tfplan
+          terraform plan -var="mongodb_uri=$MONGODB_URI" -out=tfplan
 
       - name: Terraform Apply
         run: |
           cd terraform
-          terraform apply -auto-approve tfplan
+          terraform apply -var="mongodb_uri=$MONGODB_URI" -auto-approve tfplan
 
       - name: Output API Endpoint
         run: |

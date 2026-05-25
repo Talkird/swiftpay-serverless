@@ -57,6 +57,12 @@ resource "aws_lambda_function" "swiftpay_lambda" {
   timeout       = 60
   memory_size   = 512
 
+  environment {
+    variables = {
+      MONGODB_URI = var.mongodb_uri
+    }
+  }
+
   source_code_hash = filebase64sha256("../function.zip")
   depends_on       = [aws_s3_object.lambda_zip]
 }
