@@ -92,15 +92,9 @@ resource "aws_apigatewayv2_integration" "lambda_integration" {
   integration_uri    = data.aws_lambda_function.swiftpay_lambda.invoke_arn
 }
 
-resource "aws_apigatewayv2_route" "api_route_post" {
+resource "aws_apigatewayv2_route" "api_route_default" {
   api_id    = aws_apigatewayv2_api.api.id
-  route_key = "POST /analyze"
-  target    = "integrations/${aws_apigatewayv2_integration.lambda_integration.id}"
-}
-
-resource "aws_apigatewayv2_route" "api_route_get" {
-  api_id    = aws_apigatewayv2_api.api.id
-  route_key = "GET /responses"
+  route_key = "$default"
   target    = "integrations/${aws_apigatewayv2_integration.lambda_integration.id}"
 }
 
