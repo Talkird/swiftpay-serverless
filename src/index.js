@@ -38,10 +38,12 @@ app.post("/analyze", async (req, res) => {
   };
 
   try {
+    console.log("Starting analysis request...");
     const command = new InvokeModelCommand(input);
     const response = await client.send(command);
 
     const result = JSON.parse(new TextDecoder().decode(response.body));
+    console.log("Bedrock response received:", result);
 
     await connectDB();
 
@@ -50,6 +52,9 @@ app.post("/analyze", async (req, res) => {
 
     res.json({ analysis: result.content[0].text });
   } catch (error) {
+    console.error("Error in /analyze endpoint:", error);
+    console.error("Error code:", error.code);
+    console.error("Error name:", error.name);
     res.status(500).json({ error: error.message });
   }
 });
