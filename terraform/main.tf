@@ -11,6 +11,18 @@ provider "aws" {
   region = var.region
 }
 
+# --- S3 Bucket for Lambda Deployment Package ---
+data "aws_s3_bucket" "lambda_deployment" {
+  bucket = "swiftpay-terraform-serverless-state"
+}
+
+resource "aws_s3_object" "lambda_zip" {
+  bucket = data.aws_s3_bucket.lambda_deployment.id
+  key    = "function.zip"
+  source = "../function.zip"
+  etag   = filemd5("../function.zip")
+}
+
 # --- Lambda Role and Permissions ---
 data "aws_iam_role" "lambda_role" {
   name = "swiftpay-lambda-role"
@@ -36,7 +48,8 @@ resource "aws_iam_role_policy" "bedrock_policy" {
 
 # --- Lambda Function ---
 resource "aws_lambda_function" "swiftpay_lambda" {
-  filename      = "../function.zip"
+  s3_bucket     = aws_s3_bucket.lambda_deployment.id
+  s3_key        = aws_s3_object.lambda_zip.key
   function_name = var.lambda_function_name
   role          = data.aws_iam_role.lambda_role.arn
   handler       = "src/index.handler"
@@ -45,6 +58,7 @@ resource "aws_lambda_function" "swiftpay_lambda" {
   memory_size   = 512
 
   source_code_hash = filebase64sha256("../function.zip")
+  depends_on       = [aws_s3_object.lambda_zip]
 }
 
 # --- API Gateway ---
