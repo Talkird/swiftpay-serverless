@@ -10,6 +10,25 @@ const app = express();
 
 app.use(express.json());
 
+// CORS middleware - allow only SwiftPay frontend
+const allowedOrigin =
+  "http://swiftpay-frontend-app.s3-website-us-east-1.amazonaws.com";
+
+app.use((req, res, next) => {
+  const origin = req.headers.origin;
+
+  if (origin === allowedOrigin) {
+    res.header("Access-Control-Allow-Origin", origin);
+    res.header("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
+    res.header("Access-Control-Allow-Headers", "Content-Type");
+  }
+
+  if (req.method === "OPTIONS") {
+    return res.sendStatus(200);
+  }
+  next();
+});
+
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
 app.post("/analyze", async (req, res) => {
@@ -43,33 +62,18 @@ app.post("/analyze", async (req, res) => {
     console.error("Error code:", error.code);
     console.error("Error name:", error.name);
 
-    // If Bedrock fails, save a mock response to MongoDB and return it
-    const mockResponse = `Análisis de Infraestructura SwiftPay:
-
-1. Cambio de Costo Mensual: El costo mensual aumentará aproximadamente $171.61 USD (70% de incremento).
-
-2. Significancia: Este es un aumento SIGNIFICATIVO que requiere atención inmediata.
-
-3. Optimizaciones Recomendadas:
-   • Cambiar instancias t3.medium a t3.small para ahorrar ~15 USD/mes
-   • Implementar auto-scaling en RDS para reducir costos en horas bajas
-   • Agregar CloudFront para S3 si hay tráfico de datos
-   • Reservar instancias EC2 por 1-3 años para 30% de descuento
-   
-Estimado de ahorro potencial: $35-50 USD/mes con estas optimizaciones.`;
-
     try {
       await connectDB();
-      const answer = new Answer({ body: mockResponse });
+      const answer = new Answer({ body: JSON.stringify(terraformPlanJSON) });
       await answer.save();
-      console.log("Mock response saved to MongoDB");
+      console.log("Terraform plan saved to MongoDB");
     } catch (dbError) {
-      console.error("Failed to save mock response to MongoDB:", dbError);
+      console.error("Failed to save Terraform plan to MongoDB:", dbError);
     }
 
     res.json({
-      analysis: mockResponse,
-      note: "Mock response (Gemini temporarily unavailable)",
+      analysis: terraformPlanJSON,
+      note: "Saved Terraform plan (Gemini temporarily unavailable)",
     });
   }
 });
