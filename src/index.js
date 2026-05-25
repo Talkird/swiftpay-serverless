@@ -2,10 +2,7 @@ const mongoose = require("mongoose");
 const connectDB = require("./mongoose/db.js");
 const Answer = require("./mongoose/answers.js");
 
-const {
-  BedrockRuntimeClient,
-  InvokeModelCommand,
-} = require("@aws-sdk/client-bedrock-runtime");
+const { GoogleGenerativeAI } = require("@google/generative-ai");
 
 const express = require("express");
 const serverless = require("serverless-http");
@@ -13,7 +10,7 @@ const app = express();
 
 app.use(express.json());
 
-const client = new BedrockRuntimeClient({ region: "us-east-1" });
+const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
 app.post("/analyze", async (req, res) => {
   const { terraformPlanJSON } = req.body;
@@ -27,30 +24,19 @@ app.post("/analyze", async (req, res) => {
     2. ¿Es una subida o bajada significativa?
     3. ¿Sugieres alguna optimización para ahorrar?`;
 
-  const input = {
-    modelId: "qwen.qwen3-coder-next",
-    contentType: "application/json",
-    accept: "application/json",
-    body: JSON.stringify({
-      messages: [{ role: "user", content: prompt }],
-      inferenceConfig: { max_new_tokens: 500 },
-    }),
-  };
-
   try {
-    console.log("Starting analysis request...");
-    const command = new InvokeModelCommand(input);
-    const response = await client.send(command);
-
-    const result = JSON.parse(new TextDecoder().decode(response.body));
-    console.log("Bedrock response received:", result);
+    console.log("Starting analysis request with Gemini...");
+    const model = genAI.getGenerativeModel({ model: "gemini-pro" });
+    const result = await model.generateContent(prompt);
+    const analysisText = result.response.text();
+    console.log("Gemini response received:", analysisText);
 
     await connectDB();
 
-    const answer = new Answer({ body: result.content[0].text });
+    const answer = new Answer({ body: analysisText });
     await answer.save();
 
-    res.json({ analysis: result.content[0].text });
+    res.json({ analysis: analysisText });
   } catch (error) {
     console.error("Error in /analyze endpoint:", error);
     console.error("Error code:", error.code);
@@ -82,7 +68,7 @@ Estimado de ahorro potencial: $35-50 USD/mes con estas optimizaciones.`;
 
     res.json({
       analysis: mockResponse,
-      note: "Mock response (Bedrock temporarily unavailable)",
+      note: "Mock response (Gemini temporarily unavailable)",
     });
   }
 });

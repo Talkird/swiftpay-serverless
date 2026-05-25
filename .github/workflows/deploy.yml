@@ -9,6 +9,7 @@ on:
 env:
   AWS_REGION: us-east-1
   MONGODB_URI: ${{ secrets.MONGODB_URI }}
+  GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
 
 jobs:
   deploy:
@@ -59,12 +60,12 @@ jobs:
       - name: Terraform Plan
         run: |
           cd terraform
-          terraform plan -var="mongodb_uri=$MONGODB_URI" -out=tfplan
+          terraform plan -var="mongodb_uri=$MONGODB_URI" -var="gemini_api_key=$GEMINI_API_KEY" -out=tfplan
 
       - name: Terraform Apply
         run: |
           cd terraform
-          terraform apply -var="mongodb_uri=$MONGODB_URI" -auto-approve tfplan
+          terraform apply -var="mongodb_uri=$MONGODB_URI" -var="gemini_api_key=$GEMINI_API_KEY" -auto-approve tfplan
 
       - name: Output API Endpoint
         run: |
