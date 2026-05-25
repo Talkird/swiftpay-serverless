@@ -61,7 +61,7 @@ resource "null_resource" "update_lambda_code" {
   }
 
   provisioner "local-exec" {
-    command = "aws lambda update-function-code --function-name ${data.aws_lambda_function.swiftpay_lambda.function_name} --s3-bucket ${data.aws_s3_bucket.lambda_deployment.id} --s3-key ${aws_s3_object.lambda_zip.key} --region ${var.region}"
+    command = "sleep 5 && aws lambda update-function-code --function-name ${data.aws_lambda_function.swiftpay_lambda.function_name} --s3-bucket ${data.aws_s3_bucket.lambda_deployment.id} --s3-key ${aws_s3_object.lambda_zip.key} --region ${var.region}"
   }
 
   depends_on = [aws_s3_object.lambda_zip, null_resource.update_lambda_env]
@@ -73,7 +73,7 @@ resource "null_resource" "update_lambda_env" {
   }
 
   provisioner "local-exec" {
-    command = var.gemini_api_key != "" ? "aws lambda update-function-configuration --function-name ${data.aws_lambda_function.swiftpay_lambda.function_name} --environment Variables={MONGODB_URI='${var.mongodb_uri}',GEMINI_API_KEY='${var.gemini_api_key}'} --region ${var.region}" : "aws lambda update-function-configuration --function-name ${data.aws_lambda_function.swiftpay_lambda.function_name} --environment Variables={MONGODB_URI='${var.mongodb_uri}'} --region ${var.region}"
+    command = var.gemini_api_key != "" ? "aws lambda update-function-configuration --function-name ${data.aws_lambda_function.swiftpay_lambda.function_name} --environment Variables={MONGODB_URI='${var.mongodb_uri}',GEMINI_API_KEY='${var.gemini_api_key}'} --region ${var.region} && sleep 5" : "aws lambda update-function-configuration --function-name ${data.aws_lambda_function.swiftpay_lambda.function_name} --environment Variables={MONGODB_URI='${var.mongodb_uri}'} --region ${var.region} && sleep 5"
   }
 
   depends_on = [aws_s3_object.lambda_zip]
