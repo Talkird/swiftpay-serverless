@@ -13,7 +13,7 @@ app.use(express.json());
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
 app.post("/analyze", async (req, res) => {
-  const { infracostJSON } = req.body;
+  const infracostJSON = req.body;
 
   try {
     console.log("Starting analysis request...");
@@ -23,7 +23,7 @@ app.post("/analyze", async (req, res) => {
     ${JSON.stringify(infracostJSON)}
     
     Genera un resumen breve en español:
-    1. Cuál es el costo mensual?
+    1. ¿Cuál es el costo mensual?
     2. ¿Sugieres alguna optimización para ahorrar?`;
 
     console.log("Starting Gemini analysis...");
