@@ -5,10 +5,10 @@ output "api_endpoint" {
 
 output "lambda_function_arn" {
   description = "ARN of the Lambda function"
-  value       = aws_lambda_function.swiftpay_lambda.arn
+  value       = data.aws_lambda_function.swiftpay_lambda.arn
 }
 
 output "lambda_function_name" {
   description = "Name of the Lambda function"
-  value       = aws_lambda_function.swiftpay_lambda.function_name
+  value       = data.aws_lambda_function.swiftpay_lambda.function_name
 }

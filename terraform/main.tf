@@ -47,24 +47,26 @@ resource "aws_iam_role_policy" "bedrock_policy" {
 }
 
 # --- Lambda Function ---
-resource "aws_lambda_function" "swiftpay_lambda" {
-  s3_bucket     = data.aws_s3_bucket.lambda_deployment.id
-  s3_key        = aws_s3_object.lambda_zip.key
+data "aws_lambda_function" "swiftpay_lambda" {
   function_name = var.lambda_function_name
-  role          = data.aws_iam_role.lambda_role.arn
-  handler       = "src/index.handler"
-  runtime       = "nodejs20.x"
-  timeout       = 60
-  memory_size   = 512
+}
+
+resource "aws_lambda_function_code" "swiftpay_lambda_code" {
+  s3_bucket            = data.aws_s3_bucket.lambda_deployment.id
+  s3_key               = aws_s3_object.lambda_zip.key
+  function_name        = data.aws_lambda_function.swiftpay_lambda.function_name
+  source_code_hash     = filebase64sha256("../function.zip")
+  depends_on           = [aws_s3_object.lambda_zip]
+}
+
+resource "aws_lambda_function_environment" "swiftpay_lambda_env" {
+  function_name = data.aws_lambda_function.swiftpay_lambda.function_name
 
   environment {
     variables = {
       MONGODB_URI = var.mongodb_uri
     }
   }
-
-  source_code_hash = filebase64sha256("../function.zip")
-  depends_on       = [aws_s3_object.lambda_zip]
 }
 
 # --- API Gateway ---
@@ -78,7 +80,7 @@ resource "aws_apigatewayv2_integration" "lambda_integration" {
   integration_type   = "AWS_PROXY"
   integration_method = "POST"
   payload_format_version = "2.0"
-  integration_uri    = aws_lambda_function.swiftpay_lambda.invoke_arn
+  integration_uri    = data.aws_lambda_function.swiftpay_lambda.invoke_arn
 }
 
 resource "aws_apigatewayv2_route" "api_route" {
@@ -115,7 +117,7 @@ data "aws_cloudwatch_log_group" "api_gateway_logs" {
 # --- Lambda Permission for API Gateway ---
 resource "aws_lambda_permission" "apigw" {
   action        = "lambda:InvokeFunction"
-  function_name = aws_lambda_function.swiftpay_lambda.function_name
+  function_name = data.aws_lambda_function.swiftpay_lambda.function_name
   principal     = "apigateway.amazonaws.com"
   source_arn    = "${aws_apigatewayv2_api.api.execution_arn}/*/*"
 }
