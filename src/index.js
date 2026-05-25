@@ -1,7 +1,7 @@
 const mongoose = require("mongoose");
 const connectDB = require("./mongoose/db.js");
 const Answer = require("./mongoose/answers.js");
-
+// Load environment variables from .env file (if present)
 const { GoogleGenerativeAI } = require("@google/generative-ai");
 
 const express = require("express");
@@ -26,6 +26,7 @@ app.post("/analyze", async (req, res) => {
 
   try {
     console.log("Starting analysis request with Gemini...");
+    //flash
     const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
     const result = await model.generateContent(prompt);
     const analysisText = result.response.text();
