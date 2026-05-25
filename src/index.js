@@ -26,7 +26,7 @@ app.post("/analyze", async (req, res) => {
 
   try {
     console.log("Starting analysis request with Gemini...");
-    const model = genAI.getGenerativeModel({ model: "gemini-1.5-pro" });
+    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
     const result = await model.generateContent(prompt);
     const analysisText = result.response.text();
     console.log("Gemini response received:", analysisText);
