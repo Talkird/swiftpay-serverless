@@ -45,7 +45,7 @@ resource "aws_iam_role_policy" "bedrock_policy" {
     Statement = [{
       Action   = ["bedrock:InvokeModel"]
       Effect   = "Allow"
-      Resource = "arn:aws:bedrock:${var.region}::foundation-model/amazon.nova-micro-v1:0"
+      Resource = "arn:aws:bedrock:${var.region}::foundation-model/qwen.qwen3-coder-next"
     }]
   })
 }

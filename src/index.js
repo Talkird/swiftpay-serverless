@@ -28,7 +28,7 @@ app.post("/analyze", async (req, res) => {
     3. ¿Sugieres alguna optimización para ahorrar?`;
 
   const input = {
-    modelId: "amazon.nova-micro-v1:0",
+    modelId: "qwen.qwen3-coder-next",
     contentType: "application/json",
     accept: "application/json",
     body: JSON.stringify({
