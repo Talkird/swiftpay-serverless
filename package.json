@@ -13,6 +13,7 @@
   "license": "ISC",
   "type": "commonjs",
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.98.0",
     "@aws-sdk/client-bedrock-runtime": "^3.1053.0",
     "@google/generative-ai": "^0.24.1",
     "express": "^5.2.1",

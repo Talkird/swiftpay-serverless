@@ -2,7 +2,11 @@ const mongoose = require("mongoose");
 const connectDB = require("./mongoose/db.js");
 const Answer = require("./mongoose/answers.js");
 
-const { GoogleGenerativeAI } = require("@google/generative-ai");
+const Anthropic = require("@anthropic-ai/sdk");
+
+const client = new Anthropic({
+  apiKey: process.env["ANTHROPIC_API_KEY"],
+});
 
 const express = require("express");
 const serverless = require("serverless-http");
@@ -10,14 +14,10 @@ const app = express();
 
 app.use(express.json());
 
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-
 app.post("/analyze", async (req, res) => {
   const infracostJSON = req.body;
 
   try {
-    console.log("Starting analysis request...");
-
     const prompt = `
     Analiza este reporte de costos de infraestructura de SwiftPay:
     ${JSON.stringify(infracostJSON)}
@@ -26,11 +26,14 @@ app.post("/analyze", async (req, res) => {
     1. ¿Cuál es el costo mensual?
     2. ¿Sugieres alguna optimización para ahorrar?`;
 
-    console.log("Starting Gemini analysis...");
-    const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
-    const result = await model.generateContent(prompt);
-    const analysisText = result.response.text();
-    console.log("Gemini response received");
+    const anthropicResponse = await client.messages.create({
+      max_tokens: 1024,
+      messages: [{ role: "user", content: prompt }],
+      model: "claude-opus-4-7",
+    });
+
+    const analysisText = anthropicResponse.content;
+    console.log("AI response received");
 
     await connectDB();
     const answer = new Answer({ body: analysisText });
@@ -46,6 +49,7 @@ app.post("/analyze", async (req, res) => {
       await connectDB();
       const answer = new Answer({ body: JSON.stringify(infracostJSON) });
       await answer.save();
+
       console.log("Infracost analysis saved to MongoDB");
     } catch (dbError) {
       console.error("Failed to save to MongoDB:", dbError);
@@ -53,7 +57,7 @@ app.post("/analyze", async (req, res) => {
 
     res.json({
       analysis: infracostJSON,
-      note: "Saved Infracost analysis (Gemini temporarily unavailable)",
+      note: "Saved Infracost analysis (AI temporarily unavailable)",
     });
   }
 });

@@ -37,19 +37,6 @@ resource "aws_iam_role_policy_attachment" "lambda_basic_execution" {
   role       = data.aws_iam_role.lambda_role.name
 }
 
-resource "aws_iam_role_policy" "bedrock_policy" {
-  name = "swiftpay-bedrock-policy"
-  role = data.aws_iam_role.lambda_role.id
-  policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [{
-      Action   = ["bedrock:InvokeModel"]
-      Effect   = "Allow"
-      Resource = "arn:aws:bedrock:${var.region}::foundation-model/qwen.qwen3-coder-next"
-    }]
-  })
-}
-
 # --- Lambda Function ---
 data "aws_lambda_function" "swiftpay_lambda" {
   function_name = var.lambda_function_name
@@ -70,12 +57,12 @@ resource "null_resource" "update_lambda_code" {
 resource "null_resource" "update_lambda_env" {
   triggers = {
     mongodb_uri       = var.mongodb_uri
-    gemini_api_key    = var.gemini_api_key
     infracost_api_key = var.infracost_api_key
+    anthropic_api_key = var.anthropic_api_key
   }
 
   provisioner "local-exec" {
-    command = var.gemini_api_key != "" && var.infracost_api_key != "" ? "aws lambda update-function-configuration --function-name ${data.aws_lambda_function.swiftpay_lambda.function_name} --environment Variables={MONGODB_URI='${var.mongodb_uri}',GEMINI_API_KEY='${var.gemini_api_key}',INFRACOST_API_KEY='${var.infracost_api_key}'} --region ${var.region} && sleep 5" : var.gemini_api_key != "" ? "aws lambda update-function-configuration --function-name ${data.aws_lambda_function.swiftpay_lambda.function_name} --environment Variables={MONGODB_URI='${var.mongodb_uri}',GEMINI_API_KEY='${var.gemini_api_key}'} --region ${var.region} && sleep 5" : var.infracost_api_key != "" ? "aws lambda update-function-configuration --function-name ${data.aws_lambda_function.swiftpay_lambda.function_name} --environment Variables={MONGODB_URI='${var.mongodb_uri}',INFRACOST_API_KEY='${var.infracost_api_key}'} --region ${var.region} && sleep 5" : "aws lambda update-function-configuration --function-name ${data.aws_lambda_function.swiftpay_lambda.function_name} --environment Variables={MONGODB_URI='${var.mongodb_uri}'} --region ${var.region} && sleep 5"
+    command = "aws lambda update-function-configuration --function-name ${data.aws_lambda_function.swiftpay_lambda.function_name} --environment Variables={MONGODB_URI='${var.mongodb_uri}'${var.infracost_api_key != "" ? ",INFRACOST_API_KEY='${var.infracost_api_key}'" : ""}${var.anthropic_api_key != "" ? ",ANTHROPIC_API_KEY='${var.anthropic_api_key}'" : ""}} --region ${var.region} && sleep 5"
   }
 
   depends_on = [aws_s3_object.lambda_zip]
