@@ -18,12 +18,12 @@ data "aws_iam_role" "lambda_role" {
 
 resource "aws_iam_role_policy_attachment" "lambda_basic_execution" {
   policy_arn = "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
-  role       = aws_iam_role.lambda_role.name
+  role       = data.aws_iam_role.lambda_role.name
 }
 
 resource "aws_iam_role_policy" "bedrock_policy" {
   name = "swiftpay-bedrock-policy"
-  role = aws_iam_role.lambda_role.id
+  role = data.aws_iam_role.lambda_role.id
   policy = jsonencode({
     Version = "2012-10-17"
     Statement = [{
@@ -38,7 +38,7 @@ resource "aws_iam_role_policy" "bedrock_policy" {
 resource "aws_lambda_function" "swiftpay_lambda" {
   filename      = "../function.zip"
   function_name = var.lambda_function_name
-  role          = aws_iam_role.lambda_role.arn
+  role          = data.aws_iam_role.lambda_role.arn
   handler       = "src/index.handler"
   runtime       = "nodejs20.x"
   timeout       = 60
@@ -73,7 +73,7 @@ resource "aws_apigatewayv2_stage" "default" {
   auto_deploy = true
 
   access_log_settings {
-    destination_arn = aws_cloudwatch_log_group.api_gateway_logs.arn
+    destination_arn = data.aws_cloudwatch_log_group.api_gateway_logs.arn
     format = jsonencode({
       requestId      = "$context.requestId"
       ip             = "$context.identity.sourceIp"
