@@ -57,7 +57,7 @@ data "aws_lambda_function" "swiftpay_lambda" {
 
 resource "null_resource" "update_lambda_code" {
   triggers = {
-    zip_hash = aws_s3_object.lambda_zip.etag
+    zip_hash = filemd5("../function.zip")
   }
 
   provisioner "local-exec" {
@@ -84,7 +84,6 @@ resource "aws_apigatewayv2_api" "api" {
   name          = "swiftpay-api"
   protocol_type = "HTTP"
 }
-
 resource "aws_apigatewayv2_integration" "lambda_integration" {
   api_id             = aws_apigatewayv2_api.api.id
   integration_type   = "AWS_PROXY"
