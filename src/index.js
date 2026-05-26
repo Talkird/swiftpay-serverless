@@ -14,10 +14,16 @@ app.use(express.json());
 
 app.post("/analyze", async (req, res) => {
   const infracostJSON = req.body;
+  const prNumber = req.headers["x-pr-number"];
+  const author = req.headers["x-author"];
+  const branch = req.headers["x-branch"];
 
   try {
     console.log("=== POST /analyze request received ===");
     console.log("API Key configured:", !!process.env["GEMINI_API_KEY"]);
+    console.log("PR Number:", prNumber);
+    console.log("Author:", author);
+    console.log("Branch:", branch);
     console.log("Request payload size:", JSON.stringify(infracostJSON).length);
 
     const prompt = `
@@ -47,7 +53,12 @@ app.post("/analyze", async (req, res) => {
     await connectDB();
     console.log("MongoDB connected");
 
-    const answer = new Answer({ body: analysisText });
+    const answer = new Answer({
+      body: analysisText,
+      prNumber,
+      author,
+      branch,
+    });
     await answer.save();
     console.log("Analysis saved to MongoDB");
 
@@ -63,7 +74,12 @@ app.post("/analyze", async (req, res) => {
     try {
       console.log("Attempting to save error fallback to MongoDB...");
       await connectDB();
-      const answer = new Answer({ body: JSON.stringify(infracostJSON) });
+      const answer = new Answer({
+        body: JSON.stringify(infracostJSON),
+        prNumber,
+        author,
+        branch,
+      });
       await answer.save();
       console.log("Infracost JSON saved to MongoDB as fallback");
     } catch (dbError) {

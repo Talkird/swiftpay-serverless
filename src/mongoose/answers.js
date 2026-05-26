@@ -3,6 +3,9 @@ const { Schema } = mongoose;
 
 const answerSchema = new Schema({
   body: String,
+  prNumber: String,
+  author: String,
+  branch: String,
   date: { type: Date, default: Date.now },
 });
 
