@@ -2,11 +2,9 @@ const mongoose = require("mongoose");
 const connectDB = require("./mongoose/db.js");
 const Answer = require("./mongoose/answers.js");
 
-const Anthropic = require("@anthropic-ai/sdk");
+const { GoogleGenerativeAI } = require("@google/generative-ai");
 
-const client = new Anthropic({
-  apiKey: process.env["ANTHROPIC_API_KEY"],
-});
+const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
 const express = require("express");
 const serverless = require("serverless-http");
@@ -19,7 +17,7 @@ app.post("/analyze", async (req, res) => {
 
   try {
     console.log("=== POST /analyze request received ===");
-    console.log("API Key configured:", !!process.env["ANTHROPIC_API_KEY"]);
+    console.log("API Key configured:", !!process.env["GEMINI_API_KEY"]);
     console.log("Request payload size:", JSON.stringify(infracostJSON).length);
 
     const prompt = `
@@ -30,27 +28,20 @@ app.post("/analyze", async (req, res) => {
     1. ¿Cuál es el costo mensual?
     2. ¿Sugieres alguna optimización para ahorrar?`;
 
-    console.log("Sending request to Anthropic API...");
-    const anthropicResponse = await client.messages.create({
-      max_tokens: 1024,
-      messages: [{ role: "user", content: prompt }],
-      model: "claude-haiku-4-5",
-    });
+    console.log("Sending request to Google Gemini API...");
+    const model = genAI.getGenerativeModel({ model: "gemini-3.1-flash-lite" });
+    const geminiResponse = await model.generateContent(prompt);
 
-    console.log("Anthropic response received successfully");
-    console.log("Response status:", anthropicResponse.stop_reason);
-    console.log("Content type:", anthropicResponse.content[0]?.type);
-    console.log("Usage - Input tokens:", anthropicResponse.usage?.input_tokens);
+    console.log("Gemini response received successfully");
     console.log(
-      "Usage - Output tokens:",
-      anthropicResponse.usage?.output_tokens,
+      "Response finish reason:",
+      geminiResponse.response.candidates?.[0]?.finishReason,
     );
+    console.log("Content type:", typeof geminiResponse.response.text());
+    console.log("Token usage info:", geminiResponse.response.usageMetadata);
 
-    const analysisText = anthropicResponse.content;
-    console.log(
-      "Analysis text extracted, length:",
-      JSON.stringify(analysisText).length,
-    );
+    const analysisText = geminiResponse.response.text();
+    console.log("Analysis text extracted, length:", analysisText.length);
 
     console.log("Connecting to MongoDB...");
     await connectDB();
@@ -67,7 +58,6 @@ app.post("/analyze", async (req, res) => {
     console.error("Error type:", error.constructor.name);
     console.error("Error message:", error.message);
     console.error("Error status:", error.status);
-    console.error("Error code:", error.code);
     console.error("Full error:", JSON.stringify(error, null, 2));
 
     try {

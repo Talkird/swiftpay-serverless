@@ -22,15 +22,15 @@ variable "mongodb_uri" {
   sensitive   = true
 }
 
-variable "infracost_api_key" {
-  description = "Infracost API Key"
+variable "gemini_api_key" {
+  description = "Google Gemini API Key"
   type        = string
   sensitive   = true
   default     = ""
 }
 
-variable "anthropic_api_key" {
-  description = "Anthropic API Key"
+variable "infracost_api_key" {
+  description = "Infracost API Key"
   type        = string
   sensitive   = true
   default     = ""

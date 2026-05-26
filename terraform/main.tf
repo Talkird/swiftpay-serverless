@@ -57,12 +57,12 @@ resource "null_resource" "update_lambda_code" {
 resource "null_resource" "update_lambda_env" {
   triggers = {
     mongodb_uri       = var.mongodb_uri
+    gemini_api_key    = var.gemini_api_key
     infracost_api_key = var.infracost_api_key
-    anthropic_api_key = var.anthropic_api_key
   }
 
   provisioner "local-exec" {
-    command = "aws lambda update-function-configuration --function-name ${data.aws_lambda_function.swiftpay_lambda.function_name} --environment Variables={MONGODB_URI='${var.mongodb_uri}'${var.infracost_api_key != "" ? ",INFRACOST_API_KEY='${var.infracost_api_key}'" : ""}${var.anthropic_api_key != "" ? ",ANTHROPIC_API_KEY='${var.anthropic_api_key}'" : ""}} --region ${var.region} && sleep 5"
+    command = "aws lambda update-function-configuration --function-name ${data.aws_lambda_function.swiftpay_lambda.function_name} --environment Variables={MONGODB_URI='${var.mongodb_uri}'${var.gemini_api_key != "" ? ",GEMINI_API_KEY='${var.gemini_api_key}'" : ""}${var.infracost_api_key != "" ? ",INFRACOST_API_KEY='${var.infracost_api_key}'" : ""}} --region ${var.region} && sleep 5"
   }
 
   depends_on = [aws_s3_object.lambda_zip]
