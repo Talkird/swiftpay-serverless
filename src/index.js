@@ -30,12 +30,28 @@ app.post("/analyze", async (req, res) => {
     Analiza este reporte Infracost de cambios propuestos en la infraestructura de SwiftPay para el PR #${prNumber}:
     ${JSON.stringify(infracostJSON)}
     
-    Tu tarea es realizar un análisis para ayudarme a tomar una decisión técnica y financiera sobre esta mejora de infraestructura
-    Proporciona un análisis breve en español PRE-CONFIRMACIÓN (antes de aplicar terraform apply):
+    Tu tarea es realizar un análisis para ayudar a tomar una decisión técnica y financiera sobre este cambio de infraestructura
+
     Si es necesario, sugiere alternativas o ajustes en los tipos de instancias/servicios que podrían reducir el costo sin sacrificar el rendimiento esperado
-    1. ¿Cuál es el impacto mensual en costos?
-    2. ¿Existen riesgos potenciales o advertencias?
-    3. ¿Recomendaciones antes de aplicar?`;
+    Proporciona un análisis breve en español PRE-CONFIRMACIÓN (antes de aplicar terraform apply)
+    Genera un informe técnico conciso en formato **Markdown** siguiendo estrictamente esta estructura:
+
+    1. Resumen Financiero
+    - Costo de infraestructura: [$X.XX]
+    - Principales conductores de costo: (Identifica los 3 recursos que más influyen en el costo total y su justificación técnica).
+
+    2. Evaluación de Riesgos y Seguridad (SecOps)
+    - Análisis de riesgos: (¿Detectas configuraciones críticas, recursos públicos innecesarios o brechas de seguridad?).
+    - Cumplimiento de políticas: (¿Se identifican fallos en etiquetado o reglas de cumplimiento según el reporte?).
+
+    3. Análisis DevOps
+    - Advertencias técnicas: (¿Existen configuraciones en el plan que puedan bloquear el 'terraform apply'?).
+    - Oportunidades de optimización: (¿Existen alternativas de servicios/instancias más eficientes sin sacrificar el rendimiento?).
+
+    4. Veredicto y Plan de Acción
+    - [APROBAR / RECHAZAR / SOLICITAR CAMBIOS]
+    - Lista de acciones prioritarias: (Bloqueantes vs Sugerencias de optimización).
+    `;
 
     console.log("Sending request to Google Gemini API...");
     const model = genAI.getGenerativeModel({ model: "gemini-3.1-flash-lite" });
@@ -116,6 +132,21 @@ app.get("/responses", async (req, res) => {
     console.error("Error message:", error.message);
     console.error("Full error:", error);
     res.status(500).json({ error: error.message });
+  }
+});
+
+app.post("/updatePullRequestStatus", async (req, res) => {
+  try {
+    const { prNumber, status } = req.body;
+    const answer = await Answer.findOneAndUpdate(
+      { prNumber },
+      { status },
+      { new: true },
+    );
+    if (!answer) return res.status(404).json({ error: "Not found" });
+    res.json({ answer });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
   }
 });
 

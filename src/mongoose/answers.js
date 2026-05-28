@@ -6,6 +6,12 @@ const answerSchema = new Schema({
   prNumber: String,
   author: String,
   branch: String,
+  pullRequestState: {
+    type: String,
+    enum: ["open", "closed", "merged"],
+    default: "open",
+  },
+
   date: { type: Date, default: Date.now },
 });
 
