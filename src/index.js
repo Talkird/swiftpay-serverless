@@ -2,6 +2,8 @@ const mongoose = require("mongoose");
 const connectDB = require("./mongoose/db.js");
 const Answer = require("./mongoose/answers.js");
 
+// Usando token alejo
+
 const { GoogleGenerativeAI } = require("@google/generative-ai");
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
