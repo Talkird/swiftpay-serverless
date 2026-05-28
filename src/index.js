@@ -138,12 +138,17 @@ app.get("/responses", async (req, res) => {
 app.post("/updatePullRequestStatus", async (req, res) => {
   try {
     const { prNumber, status } = req.body;
+
+    await connectDB();
+
     const answer = await Answer.findOneAndUpdate(
-      { prNumber },
-      { status },
+      { prNumber: String(prNumber) },
+      { pullRequestState: status },
       { new: true },
     );
+
     if (!answer) return res.status(404).json({ error: "Not found" });
+
     res.json({ answer });
   } catch (err) {
     res.status(500).json({ error: err.message });
